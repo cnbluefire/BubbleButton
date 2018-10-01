@@ -11,8 +11,6 @@ namespace BubbleButton.Common
 {
     public static class VisualExtensions
     {
-
-
         public static string GetScale(DependencyObject obj)
         {
             return (string)obj.GetValue(ScaleProperty);
@@ -46,9 +44,6 @@ namespace BubbleButton.Common
                 }
             }));
 
-
-
-
         public static bool GetIsBindCenterPoint(DependencyObject obj)
         {
             return (bool)obj.GetValue(IsBindCenterPointProperty);
@@ -77,8 +72,6 @@ namespace BubbleButton.Common
                     }
                 }
             }));
-
-
 
         public static string GetTransations(DependencyObject obj)
         {
@@ -115,8 +108,6 @@ namespace BubbleButton.Common
                     }
                 }
             }));
-
-
 
     }
 }

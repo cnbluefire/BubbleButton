@@ -16,11 +16,13 @@ namespace BubbleButton.Controls
     /// <summary>
     /// 气泡类
     /// </summary>
-    public class Bubble
+    public class Bubble : IDisposable
     {
-        public Bubble(Compositor Compositor, Size TargetSize, Color Color, TimeSpan Duration, bool OnTop, Size? Size = null, bool? IsFill = null)
+        public Bubble(Compositor Compositor, CanvasDevice canvasDevice, CompositionGraphicsDevice graphicsDevice, Size TargetSize, Color Color, TimeSpan Duration, bool OnTop, Size? Size = null, bool? IsFill = null)
         {
             _compositor = Compositor;
+            _canvasDevice = canvasDevice;
+            _graphicsDevice = graphicsDevice;
             _visual = Compositor.CreateSpriteVisual();
 
             if (!IsFill.HasValue)
@@ -55,13 +57,18 @@ namespace BubbleButton.Controls
             CreateAnimation(TargetSize, _visual.Offset, OnTop, Duration);
         }
 
+        ~Bubble()
+        {
+            Dispose(false);
+        }
+
         private readonly static Random rnd = new Random();
 
-        private static CanvasDevice canvasDevice;
-        private static CompositionGraphicsDevice graphicsDevice;
         private static CompositionEasingFunction easing;
 
         private Compositor _compositor;
+        private CanvasDevice _canvasDevice;
+        private CompositionGraphicsDevice _graphicsDevice;
         private SpriteVisual _visual;
         private CompositionAnimationGroup _animations;
         private Vector2 Size;
@@ -72,13 +79,7 @@ namespace BubbleButton.Controls
 
         private void Draw(bool IsFill, Color color)
         {
-            if (graphicsDevice == null)
-            {
-                canvasDevice = CanvasDevice.GetSharedDevice();
-                graphicsDevice = CanvasComposition.CreateCompositionGraphicsDevice(_compositor, canvasDevice);
-            }
-
-            _surface = graphicsDevice.CreateDrawingSurface(Size.ToSize(), Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
+            _surface = _graphicsDevice.CreateDrawingSurface(Size.ToSize(), Windows.Graphics.DirectX.DirectXPixelFormat.B8G8R8A8UIntNormalized, Windows.Graphics.DirectX.DirectXAlphaMode.Premultiplied);
             using (var dc = CanvasComposition.CreateDrawingSession(_surface))
             {
                 dc.Clear(Colors.Transparent);
@@ -108,7 +109,7 @@ namespace BubbleButton.Controls
             var scalean = _compositor.CreateVector3KeyFrameAnimation();
             scalean.InsertKeyFrame(0f, Vector3.Zero);
             scalean.InsertKeyFrame(0.2f, Vector3.One, easing);
-            scalean.InsertKeyFrame(1f, new Vector3(0.06f,0.06f,1f), easing);
+            scalean.InsertKeyFrame(1f, new Vector3(0.06f, 0.06f, 1f), easing);
             scalean.Duration = Duration;
             scalean.Target = "Scale";
             scalean.StopBehavior = AnimationStopBehavior.SetToInitialValue;
@@ -142,6 +143,31 @@ namespace BubbleButton.Controls
         {
             _visual.StopAnimationGroup(_animations);
             _visual.StartAnimationGroup(_animations);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        private void Dispose(bool IsDisposing)
+        {
+            _visual?.Dispose();
+            _visual = null;
+
+            _brush?.Dispose();
+            _brush = null;
+
+            _surface?.Dispose();
+            _surface = null;
+
+            _animations?.Dispose();
+            _animations = null;
+
+            if (IsDisposing)
+            {
+                GC.SuppressFinalize(this);
+            }
         }
     }
 }
